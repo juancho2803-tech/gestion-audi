@@ -1203,15 +1203,17 @@ let chartPedidoEstado;
 const ESTADOS = ['Abierta','Cierre de Taller','Cierre de Factura','Facturada','Anulada','Pre-Anulada'];
 
 /* Mapeo Asesor -> Sucursal (AUDI)
-   Los asesores de servicio Audi van a "Audi"; todo el resto (otros asesores) es Chapa y Pintura.
+   Asesores de servicio Audi → "Audi"; preentrega → "Preentrega"; todo el resto (otros asesores) es Chapa y Pintura.
    Nombres en MAYÚSCULAS, sin tildes, tal como vienen en la columna Asesor. */
 const SUC_AUDI = ['SARAFIAN MELANIA LAURA','TOLEDO EMILIO IVAN','VARGAS SILVIA ALEJANDRA','ZAMMITTO MAURICIO EZEQUIEL'];
+const SUC_PREENTREGA = ['MIRANDA LUCIA DEL VALLE'];
 
 function normName(s){ return (s||'').toString().trim().toUpperCase().replace(/\s+/g,' '); }
 
 function getSucursal(asesorRaw, fechaAperturaISO){
   const a = normName(asesorRaw);
   if(!a) return 'Sin asignar';
+  if(SUC_PREENTREGA.includes(a)) return 'Preentrega';
   return SUC_AUDI.includes(a) ? 'Audi' : 'Chapa y Pintura';
 }
 
