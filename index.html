@@ -854,7 +854,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
       <table id="dataTable">
         <thead>
           <tr>
-            <th>Orden</th><th>F. apertura</th><th>Asesor</th><th>Sucursal</th><th>Estado</th><th>Subtipología</th>
+            <th>Orden</th><th>F. apertura</th><th>Asesor</th><th>Área</th><th>Estado</th><th>Subtipología</th>
             <th>Mano de obra</th><th>Material</th><th>Total</th><th>Horas trabajadas</th><th>F. confirm. entrega</th>
           </tr>
         </thead>
@@ -885,7 +885,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
 
     <div class="grid-2" style="margin-bottom:26px;">
       <div class="panel">
-        <div class="panel-head"><h3>Por sucursal</h3><span class="panel-total" id="siniestroSucTotal"></span></div>
+        <div class="panel-head"><h3>Por área</h3><span class="panel-total" id="siniestroSucTotal"></span></div>
         <div class="chart-wrap" style="height:240px;"><canvas id="chartSiniestroSucursal"></canvas></div>
       </div>
       <div class="panel">
@@ -912,7 +912,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <table id="siniestroTable">
           <thead>
             <tr>
-              <th>Orden</th><th>F. apertura</th><th>Asesor</th><th>Sucursal</th><th>Estado</th><th>Días en estado</th>
+              <th>Orden</th><th>F. apertura</th><th>Asesor</th><th>Área</th><th>Estado</th><th>Días en estado</th>
               <th>Pedido</th><th>Estado pedido</th>
               <th>Mano de obra</th><th>Material</th><th>Total</th><th>Horas trabajadas</th>
             </tr>
@@ -964,7 +964,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <table id="pedidoTable">
           <thead>
             <tr>
-              <th>Orden</th><th>Nº Pedido</th><th>Asesor</th><th>Sucursal</th><th>Estado orden</th><th>Estado pedido</th>
+              <th>Orden</th><th>Nº Pedido</th><th>Asesor</th><th>Área</th><th>Estado orden</th><th>Estado pedido</th>
               <th>F. pedido</th><th>F. confirm. repuestos</th><th>Demora</th><th>Días hábiles disponible</th>
             </tr>
           </thead>
@@ -1041,7 +1041,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <table id="trackeoTable">
           <thead>
             <tr>
-              <th>Nº Orden</th><th>Cliente</th><th>Patente</th><th>Asesor</th><th>Sucursal</th><th>Tipología</th><th>Estado</th>
+              <th>Nº Orden</th><th>Cliente</th><th>Patente</th><th>Asesor</th><th>Área</th><th>Tipología</th><th>Estado</th>
               <th>Apertura</th><th>1° Marcación</th><th>Demora</th>
               <th>Última Marcación</th><th>Demora</th>
               <th>Cierre JT</th><th>Demora</th>
@@ -1080,7 +1080,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <div class="chart-wrap" style="height:320px;"><canvas id="chartAccesorioEstado"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-head"><h3>Por sucursal</h3><span class="panel-total" id="accesorioSucTotal"></span></div>
+        <div class="panel-head"><h3>Por área</h3><span class="panel-total" id="accesorioSucTotal"></span></div>
         <div class="chart-wrap" style="height:320px;"><canvas id="chartAccesorioSucursal"></canvas></div>
       </div>
     </div>
@@ -1103,7 +1103,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <table id="accesorioTable">
           <thead>
             <tr>
-              <th>Orden</th><th>Cliente</th><th>Asesor</th><th>Sucursal</th><th>Estado</th><th>Subtipología</th>
+              <th>Orden</th><th>Cliente</th><th>Asesor</th><th>Área</th><th>Estado</th><th>Subtipología</th>
               <th>F. apertura</th><th>Pedido</th><th>Estado pedido</th>
               <th>Mano de obra</th><th>Material</th><th>Total</th>
             </tr>
@@ -1138,7 +1138,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <div class="chart-wrap" style="height:320px;"><canvas id="chartGarantiaEstado"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-head"><h3>Por sucursal</h3><span class="panel-total" id="garantiaSucTotal"></span></div>
+        <div class="panel-head"><h3>Por área</h3><span class="panel-total" id="garantiaSucTotal"></span></div>
         <div class="chart-wrap" style="height:320px;"><canvas id="chartGarantiaSucursal"></canvas></div>
       </div>
     </div>
@@ -1174,7 +1174,7 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
         <table id="garantiaTable">
           <thead>
             <tr>
-              <th>Orden</th><th>Cliente</th><th>Asesor</th><th>Sucursal</th><th>Estado</th><th>Subtipología</th>
+              <th>Orden</th><th>Cliente</th><th>Asesor</th><th>Área</th><th>Estado</th><th>Subtipología</th>
               <th>F. apertura</th><th>Nº Pedido</th><th>F. vale</th><th>Días desde vale</th>
               <th>Mano de obra</th><th>Material</th><th>Total</th>
             </tr>
@@ -1202,8 +1202,8 @@ let chartPedidoEstado;
 
 const ESTADOS = ['Abierta','Cierre de Taller','Cierre de Factura','Facturada','Anulada','Pre-Anulada'];
 
-/* Mapeo Asesor -> Sucursal (AUDI)
-   Asesores de servicio Audi → "Audi"; preentrega → "Preentrega"; todo el resto (otros asesores) es Chapa y Pintura.
+/* Mapeo Asesor -> Área (AUDI tiene un solo local; el campo interno sigue llamándose "sucursal")
+   Asesores de servicio → "Servicio"; preentrega → "Preentrega"; todo el resto (otros asesores) es Chapa y Pintura.
    Nombres en MAYÚSCULAS, sin tildes, tal como vienen en la columna Asesor. */
 const SUC_AUDI = ['SARAFIAN MELANIA LAURA','TOLEDO EMILIO IVAN','VARGAS SILVIA ALEJANDRA','ZAMMITTO MAURICIO EZEQUIEL'];
 const SUC_PREENTREGA = ['MIRANDA LUCIA DEL VALLE'];
@@ -1214,7 +1214,7 @@ function getSucursal(asesorRaw, fechaAperturaISO){
   const a = normName(asesorRaw);
   if(!a) return 'Sin asignar';
   if(SUC_PREENTREGA.includes(a)) return 'Preentrega';
-  return SUC_AUDI.includes(a) ? 'Audi' : 'Chapa y Pintura';
+  return SUC_AUDI.includes(a) ? 'Servicio' : 'Chapa y Pintura';
 }
 
 /* Tipologia orden -> Tipologia (1er token) + Subtipologia = texto ORIGINAL completo */
@@ -1799,7 +1799,7 @@ function ingestRows(rows){
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 const FILTER_CONFIGS = [
-  { key:'sucursal', label:'Sucursal', get:r=>r.sucursal },
+  { key:'sucursal', label:'Área', get:r=>r.sucursal },
   { key:'asesor', label:'Asesor', get:r=>r.asesor, fmt:titleCase },
   { key:'estado', label:'Estado', get:r=>r.estado },
   { key:'tipologia', label:'Tipología', get:r=>r.tipologia },
@@ -2988,7 +2988,7 @@ Object.entries(STATUS_GAUGE_COLORS).forEach(([id,color]) => {
 function renderCards(){
   const total = FILTERED.length;
   document.getElementById('cTotal').textContent = total.toLocaleString('es-AR');
-  document.getElementById('cTotalSub').textContent = total ? `${[...new Set(FILTERED.map(r=>r.asesor))].length} asesores · ${[...new Set(FILTERED.map(r=>r.sucursal))].length} sucursales` : 'Cargá una base para empezar';
+  document.getElementById('cTotalSub').textContent = total ? `${[...new Set(FILTERED.map(r=>r.asesor))].length} asesores · ${[...new Set(FILTERED.map(r=>r.sucursal))].length} áreas` : 'Cargá una base para empezar';
 
   const counts = {};
   ESTADOS.forEach(s => counts[s] = FILTERED.filter(r=>r.estado===s).length);
@@ -3371,7 +3371,7 @@ function renderEjecutivoAsesores(facturadas){
   const th = (key, label, cls='num', ayuda='') => `<th class="${cls} sortable ${ordenAsesor.key===key?'sorted':''}" data-sort="${key}" title="${ayuda ? ayuda + ' · ' : ''}Clic para ordenar">${label}${ordenAsesor.key===key ? (ordenAsesor.dir>0?' ▲':' ▼') : ''}</th>`;
   const nombreVista = { efic:'eficiencia', fact:'hs facturadas', trab:'hs trabajadas' }[vistaAsesor];
   document.getElementById('ejecutivoAsesorHead').innerHTML = `<tr>
-    ${th('asesor','Asesor','sticky-col')}<th>Sucursal</th>
+    ${th('asesor','Asesor','sticky-col')}<th>Área</th>
     ${th('n','Órdenes')}${th('trab','Hs trabajadas')}${th('fact','Hs facturadas')}${th('sinMarc','Fact. sin marcación','num','Horas facturadas en órdenes sin tiempo marcado (entre paréntesis, cantidad de órdenes). No entran en diferencia ni eficiencia porque no se sabe cuánto se trabajó')}${th('dif','Diferencia','num','Hs facturadas − hs trabajadas, en órdenes con marcación (incluye trabajadas sin facturar)')}${th('efic','Eficiencia','num',`Hs facturadas / hs trabajadas, en órdenes con marcación. Verde ≥ ${EF_OK}%, naranja ≥ ${EF_ALERTA}%, rojo menor`)}
     ${cols.map((k,i) => `<th class="num" title="${nombreVista}">${ejPeriodLabel(k, periodoAsesor)}</th>`).join('')}
   </tr>`;
@@ -4057,7 +4057,7 @@ document.getElementById('gerLlamarDescarga').addEventListener('click', () => {
   const filas = _gerLlamar.map(({v, r, dias, kmServ}) => ({
     'Patente': v.patente || '', 'Chasis': v.chasis, 'Modelo': v.familia, 'Cliente': titleCase(v.cliente), 'DNI/CUIT': v.dni,
     'Último service': kmServ ? `${kmServ} km` : 'service', 'Fecha último service': gFecha(v.ult), 'Meses sin volver': +(dias/30.4).toFixed(1),
-    'Km último ingreso': v.km || '', 'Asesor': titleCase(r.asesor), 'Sucursal': r.sucursal, 'Nº orden': r.orden
+    'Km último ingreso': v.km || '', 'Asesor': titleCase(r.asesor), 'Área': r.sucursal, 'Nº orden': r.orden
   }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'Para llamar');
@@ -4317,7 +4317,7 @@ function renderEjecutivoOrdenes(facturadas){
   const th = (key, label, cls='', ayuda='') => `<th class="${cls} sortable ${ordenEjSort.key===key?'sorted':''}" data-sort="${key}" title="${ayuda ? ayuda + ' · ' : ''}Clic para ordenar">${label}${ordenEjSort.key===key ? (ordenEjSort.dir>0?' ▲':' ▼') : ''}</th>`;
   document.getElementById('ordenEjHead').innerHTML = `<tr>
     ${th('orden','Nº orden / patente','sticky-col','Pasá el mouse por la orden para ver el cliente')}${th('fFacturacion','Facturación')}
-    ${th('asesor','Asesor / sucursal')}${th('subtipologia','Subtipología')}
+    ${th('asesor','Asesor / área')}${th('subtipologia','Subtipología')}
     ${th('trab','Hs trabajadas','num')}${th('fact','Hs facturadas','num')}
     ${th('dif','Diferencia','num','Hs facturadas − hs trabajadas (solo con marcación)')}
     ${th('efic','Eficiencia','num',`Hs facturadas / hs trabajadas. Verde ≥ ${EF_OK}%, naranja ≥ ${EF_ALERTA}%, rojo menor`)}
@@ -4408,7 +4408,7 @@ function renderEjecutivo(){
       <div class="hero-main-text">
         <div class="hero-eyebrow">Órdenes en base</div>
         <div class="hv num">${total.toLocaleString('es-AR')}</div>
-        <div class="hv-sub">${total ? `${[...new Set(rows.map(r=>r.asesor))].length} asesores · ${[...new Set(rows.map(r=>r.sucursal))].length} sucursales` : 'Cargá una base para empezar'}</div>
+        <div class="hv-sub">${total ? `${[...new Set(rows.map(r=>r.asesor))].length} asesores · ${[...new Set(rows.map(r=>r.sucursal))].length} áreas` : 'Cargá una base para empezar'}</div>
       </div>
     </div>
     <div class="hero-card mini" style="--card-c:var(--ok);cursor:default;">
