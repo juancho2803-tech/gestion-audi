@@ -44,6 +44,7 @@
   --mod-garantia: var(--ok);
   --mod-ejecutivo: #C2298A;
   --mod-gerencia: #5E8C1F;
+  --mod-conversion: #0B8A8F;
   /* Tipo de vehículo (paleta categórica validada, 4 primeros slots) */
   --veh-auto:#2a78d6; --veh-suv:#eb6834; --veh-pickup:#1baf7a; --veh-util:#eda100;
   --grid-line: rgba(18,21,31,.035);
@@ -77,6 +78,7 @@
   --mod-accesorios: #FFB454;
   --mod-ejecutivo: #FF6EC7;
   --mod-gerencia: #A3D65C;
+  --mod-conversion: #3FD3CC;
   --veh-auto:#3987e5; --veh-suv:#d95926; --veh-pickup:#199e70; --veh-util:#c98500;
   --grid-line: rgba(255,255,255,.035);
 }
@@ -445,6 +447,10 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
       <span>Gerencia</span>
     </button>
+    <button class="view-nav-btn" data-view="conversion" style="--nav-c:var(--mod-conversion)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+      <span>Conversión</span>
+    </button>
     <button class="view-nav-btn active" data-view="resumen" style="--nav-c:var(--mod-resumen)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 1 9 9"/><path d="M12 7v5l3 2"/></svg>
       <span>Resumen general</span>
@@ -629,6 +635,52 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
       <div class="ger-nota" id="gerProyNota"></div>
     </div>
   </div><!-- /view-gerencia -->
+
+  <div id="view-conversion" class="view hidden">
+    <div class="section-intro">
+      <h2><span class="section-icon" style="--sic:var(--mod-conversion);--sic-soft:color-mix(in srgb, var(--mod-conversion) 16%, transparent)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span>Conversión y ticket — Servicio</h2>
+      <p>Órdenes del área <strong>Servicio</strong>, externas y garantía (sin chapa y pintura ni anuladas). Las tasas de conversión van por <strong>mes de apertura</strong>; el ticket de repuestos y mano de obra, por <strong>mes de facturación</strong>. Un "auto" es un chasis distinto (o patente si no hay chasis).</p>
+    </div>
+
+    <div class="filters" id="filtersBar-conversion">
+      <span class="filter-clear" id="clearFilters-conversion">Limpiar filtros</span>
+      <span class="filter-count" id="filterCount-conversion"></span>
+    </div>
+
+    <div class="status-row cols-4 ger-kpi" id="convKpis"></div>
+
+    <div class="table-panel" style="margin-bottom:26px;">
+      <div class="table-head"><h3>Tendencia mes a mes</h3><span class="table-count" id="convMesCount"></span></div>
+      <div class="ger-insight" style="padding:14px 20px 0;" id="convMesInsight"></div>
+      <div class="table-scroll" style="max-height:none;"><table class="pivot-table mm-table" id="convMesTabla"></table></div>
+      <div class="ger-nota" style="padding:0 20px 16px;" id="convMesNota"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head"><h3>Ticket por auto</h3></div>
+        <div class="chart-wrap" style="height:260px;"><canvas id="chartConvTicket"></canvas></div>
+        <div class="ger-nota">Repuestos y mano de obra facturados divididos por los autos distintos facturados en el mes; el ticket por orden, sobre la cantidad de órdenes.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Tasas de conversión</h3></div>
+        <div class="chart-wrap" style="height:260px;"><canvas id="chartConvTasas"></canvas></div>
+        <div class="ger-nota">Service con trabajo adicional: services que además llevan otra tarea (reparación, pedido del cliente). Con repuestos: órdenes facturadas que venden material.</div>
+      </div>
+    </div>
+
+    <div class="table-panel" style="margin-bottom:26px;">
+      <div class="table-head"><h3>Conversión por asesor</h3><span class="table-count" id="convAsesorCount"></span></div>
+      <div class="table-scroll" style="max-height:none;"><table class="pivot-table" id="convAsesorTabla"></table></div>
+    </div>
+
+    <div class="table-panel" style="margin-bottom:26px;">
+      <div class="table-head"><h3>Presupuestos → trabajo</h3><span class="table-count" id="convPresuCount"></span></div>
+      <div class="ger-insight" style="padding:14px 20px 0;" id="convPresuInsight"></div>
+      <div class="table-scroll"><table class="pivot-table" id="convPresuTabla"></table></div>
+      <div class="ger-nota" style="padding:0 20px 16px;">Un presupuesto es una tarea que empieza con "PRESUPUEST…". Se considera convertido si el mismo auto vuelve con una orden (no anulada) dentro de los 90 días siguientes.</div>
+    </div>
+  </div><!-- /view-conversion -->
 
   <div id="view-ejecutivo" class="view hidden">
     <div class="section-intro">
@@ -1804,22 +1856,22 @@ const FILTER_CONFIGS = [
   { key:'estado', label:'Estado', get:r=>r.estado },
   { key:'tipologia', label:'Tipología', get:r=>r.tipologia },
   { key:'subtipologia', label:'Subtipología', get:r=>r.subtipologia },
-  { key:'pedido', label:'Pedido fábrica', exceptNs:['gerencia'], get:r=>r.pedido, staticValues:['si','no'], fmt:v=>v==='si'?'Con pedido':'Sin pedido' },
-  { key:'confirmacion', label:'Confirmación entrega', exceptNs:['gerencia'], get:r=> r.fConfirm ? 'si':'no', staticValues:['si','no'], fmt:v=>v==='si'?'Confirmada':'Sin confirmar' },
+  { key:'pedido', label:'Pedido fábrica', exceptNs:['gerencia','conversion'], get:r=>r.pedido, staticValues:['si','no'], fmt:v=>v==='si'?'Con pedido':'Sin pedido' },
+  { key:'confirmacion', label:'Confirmación entrega', exceptNs:['gerencia','conversion'], get:r=> r.fConfirm ? 'si':'no', staticValues:['si','no'], fmt:v=>v==='si'?'Confirmada':'Sin confirmar' },
   { key:'mes', label:'Mes apertura', get:r=>r.mesApertura, fmt:m=> m ? `${MESES[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}` : m },
   // Mes de la fecha de facturación real. Solo en los módulos que incluyen órdenes facturadas.
-  { key:'mesFact', label:'Mes facturación', onlyNs:['ejecutivo','resumen','trackeo','accesorios'],
+  { key:'mesFact', label:'Mes facturación', onlyNs:['ejecutivo','resumen','trackeo','accesorios','conversion'],
     get:r=> (r.fFacturacion && fechaRazonable(r.fFacturacion)) ? r.fFacturacion.slice(0,7) : (r.estado==='Facturada' ? '(Facturada sin fecha)' : '(Sin facturar)'),
     fmt:m=> /^\d{4}-\d{2}$/.test(m) ? `${MESES[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}` : m },
-  { key:'estadoPedido', label:'Estado pedido', exceptNs:['gerencia'], get:r=>r.estadoPedido || '(Sin estado)' },
-  { key:'tipoVeh', label:'Tipo de vehículo', onlyNs:['gerencia'], get:r=>gerInfo(r).tipo },
+  { key:'estadoPedido', label:'Estado pedido', exceptNs:['gerencia','conversion'], get:r=>r.estadoPedido || '(Sin estado)' },
+  { key:'tipoVeh', label:'Tipo de vehículo', onlyNs:['gerencia','conversion'], get:r=>gerInfo(r).tipo },
   { key:'motivo', label:'Motivo de visita', onlyNs:['gerencia'], get:r=>gerInfo(r).motivo },
 ];
 
-const NS_LIST = ['resumen','siniestros','pedidos','trackeo','accesorios','garantia','ejecutivo','gerencia'];
+const NS_LIST = ['resumen','siniestros','pedidos','trackeo','accesorios','garantia','ejecutivo','gerencia','conversion'];
 function newFilterSet(){ const s={}; FILTER_CONFIGS.forEach(c => s[c.key] = new Set()); return s; }
-const filterState = { resumen: newFilterSet(), siniestros: newFilterSet(), pedidos: newFilterSet(), trackeo: newFilterSet(), accesorios: newFilterSet(), garantia: newFilterSet(), ejecutivo: newFilterSet(), gerencia: newFilterSet() };
-const cfgValues = { resumen: {}, siniestros: {}, pedidos: {}, trackeo: {}, accesorios: {}, garantia: {}, ejecutivo: {}, gerencia: {} };
+const filterState = { resumen: newFilterSet(), siniestros: newFilterSet(), pedidos: newFilterSet(), trackeo: newFilterSet(), accesorios: newFilterSet(), garantia: newFilterSet(), ejecutivo: newFilterSet(), gerencia: newFilterSet(), conversion: newFilterSet() };
+const cfgValues = { resumen: {}, siniestros: {}, pedidos: {}, trackeo: {}, accesorios: {}, garantia: {}, ejecutivo: {}, gerencia: {}, conversion: {} };
 
 let activeStatusCardResumen = null;
 let activeStatusCardSiniestros = null;
@@ -1828,6 +1880,7 @@ let activeStatusCardTrackeo = null; // sin cards de estado en Trackeo, queda sie
 let activeStatusCardAccesorios = null;
 let activeStatusCardGarantia = null;
 let activeStatusCardGerencia = null, activeInsightGerencia = null; // Gerencia no usa cards de estado
+let activeStatusCardConversion = null, activeInsightConversion = null; // Conversión tampoco
 let activeStatusCardEjecutivo = null; // sin cards de estado en Ejecutivo, queda siempre null
 let activeInsight = null; // Resumen (INSIGHTS)
 let activeInsightTrackeo = null; // sin indicadores en Trackeo, queda siempre null
@@ -1841,6 +1894,7 @@ function baseRowsFor(ns){
   if(ns === 'accesorios') return RAW.filter(isAccesorio);
   if(ns === 'garantia') return RAW.filter(r => isGarantia(r) && r.estado === 'Abierta');
   if(ns === 'gerencia') return gerBaseRows();
+  if(ns === 'conversion') return RAW.filter(esConvBase);
   return RAW; // resumen, trackeo y ejecutivo trabajan sobre toda la base
 }
 
@@ -1956,7 +2010,7 @@ function clearFiltersFor(ns){
   else if(ns === 'accesorios'){ activeStatusCardAccesorios = null; activeAccesorioInsight = null; }
   else if(ns === 'garantia'){ activeStatusCardGarantia = null; activeGarantiaInsight = null; valeSelectorGarantia = 'todos'; activeValeNivel = null; syncValeSelectorUI(); }
   else if(ns === 'ejecutivo'){ activeStatusCardEjecutivo = null; activeInsightEjecutivo = null; }
-  else if(ns === 'gerencia'){ /* sin estado propio */ }
+  else if(ns === 'gerencia' || ns === 'conversion'){ /* sin estado propio */ }
   else { activeStatusCardTrackeo = null; activeInsightTrackeo = null; }
   applyFilters(ns);
 }
@@ -1968,6 +2022,7 @@ document.getElementById('clearFilters-accesorios').addEventListener('click', () 
 document.getElementById('clearFilters-garantia').addEventListener('click', () => clearFiltersFor('garantia'));
 document.getElementById('clearFilters-ejecutivo').addEventListener('click', () => clearFiltersFor('ejecutivo'));
 document.getElementById('clearFilters-gerencia').addEventListener('click', () => clearFiltersFor('gerencia'));
+document.getElementById('clearFilters-conversion').addEventListener('click', () => clearFiltersFor('conversion'));
 document.getElementById('searchBox').addEventListener('input', debounce(renderTable));
 
 function nsStatusVar(ns){
@@ -1978,6 +2033,7 @@ function nsStatusVar(ns){
   if(ns==='garantia') return {get:()=>activeStatusCardGarantia, set:v=>activeStatusCardGarantia=v};
   if(ns==='ejecutivo') return {get:()=>activeStatusCardEjecutivo, set:v=>activeStatusCardEjecutivo=v};
   if(ns==='gerencia') return {get:()=>activeStatusCardGerencia, set:v=>activeStatusCardGerencia=v};
+  if(ns==='conversion') return {get:()=>activeStatusCardConversion, set:v=>activeStatusCardConversion=v};
   return {get:()=>activeStatusCardPedidos, set:v=>activeStatusCardPedidos=v};
 }
 function nsInsightList(ns){
@@ -1986,7 +2042,7 @@ function nsInsightList(ns){
   if(ns==='trackeo') return [];
   if(ns==='accesorios') return ACCESORIO_INSIGHTS;
   if(ns==='garantia') return GARANTIA_INSIGHTS;
-  if(ns==='ejecutivo' || ns==='gerencia') return [];
+  if(ns==='ejecutivo' || ns==='gerencia' || ns==='conversion') return [];
   return PEDIDO_INSIGHTS;
 }
 function nsInsightVar(ns){
@@ -1997,6 +2053,7 @@ function nsInsightVar(ns){
   if(ns==='garantia') return {get:()=>activeGarantiaInsight, set:v=>activeGarantiaInsight=v};
   if(ns==='ejecutivo') return {get:()=>activeInsightEjecutivo, set:v=>activeInsightEjecutivo=v};
   if(ns==='gerencia') return {get:()=>activeInsightGerencia, set:v=>activeInsightGerencia=v};
+  if(ns==='conversion') return {get:()=>activeInsightConversion, set:v=>activeInsightConversion=v};
   return {get:()=>activePedidoInsight, set:v=>activePedidoInsight=v};
 }
 
@@ -2057,9 +2114,10 @@ function renderCurrentView(){
   else if(currentView === 'accesorios'){ renderAccesorios(); }
   else if(currentView === 'garantia'){ renderGarantia(); }
   else if(currentView === 'gerencia'){ renderGerencia(); }
+  else if(currentView === 'conversion'){ renderConversion(); }
   else { renderEjecutivo(); }
 }
-const VIEW_TITLES = { resumen:'Resumen general', siniestros:'Siniestros — Chapa y Pintura', pedidos:'Pedidos a fábrica', trackeo:'Trackeo', accesorios:'Accesorios', garantia:'Garantía', ejecutivo:'Panorama Ejecutivo', gerencia:'Gerencia' };
+const VIEW_TITLES = { resumen:'Resumen general', siniestros:'Siniestros — Chapa y Pintura', pedidos:'Pedidos a fábrica', trackeo:'Trackeo', accesorios:'Accesorios', garantia:'Garantía', ejecutivo:'Panorama Ejecutivo', gerencia:'Gerencia', conversion:'Conversión y ticket' };
 document.getElementById('viewNav').addEventListener('click', e => {
   const btn = e.target.closest('.view-nav-btn');
   if(!btn) return;
@@ -2073,6 +2131,7 @@ document.getElementById('viewNav').addEventListener('click', e => {
   document.getElementById('view-garantia').classList.toggle('hidden', currentView!=='garantia');
   document.getElementById('view-ejecutivo').classList.toggle('hidden', currentView!=='ejecutivo');
   document.getElementById('view-gerencia').classList.toggle('hidden', currentView!=='gerencia');
+  document.getElementById('view-conversion').classList.toggle('hidden', currentView!=='conversion');
   document.querySelector('.brand-text span').textContent = VIEW_TITLES[currentView];
   renderCurrentView();
 });
@@ -3429,7 +3488,7 @@ function motivoVisita(r){
   if(r.preentrega === 'si' || /PRE-?ENTREGA/.test(sub) || /GESTI[OÓ]N DE COMPONENTES/.test(t1)) return 'Preentrega 0 km';
   if(sub.includes('CHAPA')) return 'Chapa y pintura';
   if(sub.includes('ACCESORIO')) return 'Accesorios';
-  if(/^SERVICIO\b.*KM/.test(t1) || /SERVICIO (DE )?\d|SERVICIO DE MANTENIMIENTO/.test(ts)) return 'Service programado';
+  if(/^SERVICIO\b.*KM/.test(t1) || /SERVICIO (DE )?\d|SERVICIO DE MANTENIMIENTO|SERVICIO ANUAL|PRIMER SERVICIO|SERVICIO POR TIEMPO|CAMBIO DE ACEITE/.test(ts)) return 'Service programado';
   if(tip === 'GARANTÍA' || tip === 'GARANTIA') return 'Garantía (reparación)';
   if(/ALINE|BALANCE|NEUM[AÁ]TIC|CUBIERTA/.test(ts)) return 'Alineado, balanceo y neumáticos';
   if(tip === 'INTERNA') return 'Interna / usados';
@@ -3812,6 +3871,258 @@ function renderGerProyeccion(visitas, rows, ctx){
   tabla.innerHTML = `<thead><tr><th>Mes</th><th class="num">Vehículos</th><th class="num">Rango</th><th class="num">Órdenes estimadas</th><th class="num">Facturación estimada</th><th>Base</th></tr></thead><tbody>` +
     filas.map(f => `<tr><td>${gMesNombre(f.k)} ${f.k.slice(0,4)}</td><td class="num hcell"><b>${gNum(f.v)}</b></td><td class="num hcell">${f.lo === f.hi ? '—' : `${gNum(f.lo)} a ${gNum(f.hi)}`}</td><td class="num hcell">${gNum(f.v*ordPorVis)}</td><td class="num hcell">${ticket3 ? fmtMoney(f.v*ordPorVis*ticket3) : '—'}</td><td style="color:var(--text-dim)">${f.nota}</td></tr>`).join('') + '</tbody>';
   nota.textContent = `Tendencia lineal sobre ${hist.map(gMesCorto).join(', ')}. El rango refleja cuánto se apartaron los meses reales de la tendencia. Órdenes: ${gNum(ordPorVis,2)} por vehículo; facturación: ticket promedio de los últimos 3 meses (${ticket3 ? fmtMoney(ticket3) : '—'}) a valores de hoy, sin inflación. No contempla estacionalidad (vacaciones, fin de año): con 12 meses o más de historia se puede incorporar.`;
+}
+
+/* ============ CONVERSIÓN Y TICKET (área Servicio) ============ */
+// Tareas de service (nomenclatura Audi: "MANO DE OBRA SERVICIO ANUAL", "... SERVICIO DE 30.000 KM", "INSPECCION CON CAMBIO DE ACEITE"...)
+const CONV_SERV_RE = /SERVICIO (ANUAL|DE \d|DE MANTENIMIENTO|POR TIEMPO|BONIFICADO)|PRIMER SERVICIO|CAMBIO DE ACEITE|SERVICIO DE MANTENIMIENTO/;
+// Tareas administrativas / genéricas que no cuentan como trabajo adicional
+const CONV_NOISE_RE = /^(OPERACION STANDARD|SIN SERVICIO|PARA PAGO A PROVEEDOR|INTERNA TALLER)$/;
+const CONV_PRESU_RE = /PRESUPUEST/;
+const CONV_DIAS_PRESU = 90;
+let chartConvTicket = null, chartConvTasas = null;
+
+function esConvBase(r){
+  const tip = (r.tipologia||'').toUpperCase();
+  return r.sucursal === 'Servicio' && (tip === 'EXTERNA' || tip === 'GARANTÍA' || tip === 'GARANTIA')
+    && !(r.subtipologia||'').toUpperCase().includes('CHAPA')
+    && !/ANULADA/i.test(r.estado||'') && r.fApertura && fechaRazonable(r.fApertura);
+}
+const _convCache = new WeakMap();
+function convInfo(r){
+  let c = _convCache.get(r);
+  if(c) return c;
+  const ts = (r.tareas || r.tarea1 || '').split('|').map(t => t.trim()).filter(Boolean);
+  const esServ = t => CONV_SERV_RE.test(t) && !/SIN SERVICIO/.test(t);
+  c = {
+    serv: ts.some(esServ),
+    extra: ts.filter(t => !esServ(t) && !CONV_SERV_RE.test(t) && !CONV_NOISE_RE.test(t) && !CONV_PRESU_RE.test(t)),
+    presu: ts.filter(t => CONV_PRESU_RE.test(t)),
+    veh: r.chasis || r.patente || ('OT' + r.orden),
+    rep: (Number(r.matFacturado)||0) + (Number(r.matExterno)||0),
+    mo: (Number(r.moFacturada)||0) + (Number(r.moExterna)||0),
+  };
+  _convCache.set(r, c);
+  return c;
+}
+const convFact = r => r.estado === 'Facturada' && r.fFacturacion && fechaRazonable(r.fFacturacion);
+
+/** Presupuestos de las filas dadas y su conversión: el mismo auto vuelve con una orden (no anulada) en los 90 días siguientes */
+function convPresupuestos(rows){
+  const porVeh = new Map();
+  RAW.forEach(o => {
+    if(/ANULADA/i.test(o.estado||'') || !o.fApertura || !fechaRazonable(o.fApertura)) return;
+    const k = o.chasis || o.patente; if(!k) return;
+    (porVeh.get(k) || porVeh.set(k, []).get(k)).push(o);
+  });
+  const out = [];
+  rows.forEach(r => {
+    const ci = convInfo(r);
+    if(!ci.presu.length) return;
+    const k = r.chasis || r.patente;
+    const lim = gAdd(r.fApertura, CONV_DIAS_PRESU);
+    const sig = (porVeh.get(k) || []).filter(o => o !== r && o.fApertura > r.fApertura && o.fApertura <= lim)
+      .sort((a,b) => a.fApertura < b.fApertura ? -1 : 1)[0] || null;
+    out.push({ r, tareas: ci.presu, sig });
+  });
+  return out;
+}
+
+function renderConversion(){
+  const base = RAW.filter(esConvBase);
+  const rows = computeFiltered('conversion');
+  if(!base.length){
+    ['convKpis','convMesTabla','convAsesorTabla','convPresuTabla','convMesInsight','convPresuInsight'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('convMesCount').textContent = 'Cargá una base para ver esta sección.';
+    return;
+  }
+  const refISO = base.reduce((mx,r) => r.fApertura > mx ? r.fApertura : mx, '');
+  const minISO = base.reduce((mn,r) => r.fApertura < mn ? r.fApertura : mn, refISO);
+  const curMk = refISO.slice(0,7);
+  const inc = gerMesesIncompletos(gerVisitas(base), minISO, curMk);
+  const meses = Array.from({length:12}, (_,i) => gMesAdd(curMk, -11+i)).filter(k => k >= minISO.slice(0,7));
+  const completo = k => k !== curMk && !inc.has(k);
+  const presus = convPresupuestos(rows);
+  const presuPorOrden = new Map(presus.map(p => [p.r, p]));
+
+  // ---- agregados por mes (y uno global para las cards)
+  const nuevo = () => ({ ord:0, serv:0, servExtra:0, presu:0, presuConv:0, fact:0, factRep:0, rep:0, mo:0, veh:new Set() });
+  const M = {}; meses.forEach(k => M[k] = nuevo());
+  const T = nuevo();
+  const sumarApertura = (o, r) => {
+    const ci = convInfo(r);
+    o.ord++;
+    if(ci.serv){ o.serv++; if(ci.extra.length) o.servExtra++; }
+    const p = presuPorOrden.get(r);
+    if(p){ o.presu++; if(p.sig) o.presuConv++; }
+  };
+  const sumarFact = (o, r) => {
+    const ci = convInfo(r);
+    o.fact++; if(ci.rep > 0) o.factRep++;
+    o.rep += ci.rep; o.mo += ci.mo; o.veh.add(ci.veh);
+  };
+  rows.forEach(r => {
+    sumarApertura(T, r);
+    const a = M[r.fApertura.slice(0,7)]; if(a) sumarApertura(a, r);
+    if(convFact(r)){ sumarFact(T, r); const f = M[r.fFacturacion.slice(0,7)]; if(f) sumarFact(f, r); }
+  });
+  const pct = (a,b) => b ? a/b*100 : null;
+  const IND = {
+    servExtra: o => pct(o.servExtra, o.serv),
+    conRep: o => pct(o.factRep, o.fact),
+    repAuto: o => o.veh.size ? o.rep / o.veh.size : null,
+    moAuto: o => o.veh.size ? o.mo / o.veh.size : null,
+    ticketOrden: o => o.fact ? (o.rep + o.mo) / o.fact : null,
+    presuConv: o => pct(o.presuConv, o.presu),
+  };
+
+  // ---- cards: valor del período filtrado + último mes completo vs el anterior
+  const comp = meses.filter(completo);
+  const uK = comp[comp.length-1], pK = comp[comp.length-2];
+  const fmtPct = v => v === null ? '—' : gNum(v,1) + '%';
+  const deltaHtml = (f, pp) => {
+    if(!uK || !pK) return '';
+    const a = f(M[uK]), b = f(M[pK]);
+    if(a === null || b === null) return '';
+    const d = pp ? a - b : (b ? (a/b - 1)*100 : null);
+    if(d === null) return '';
+    if(Math.abs(d) < (pp ? 0.5 : 1)) return `<small class="flat">= ${gNum(Math.abs(d), pp?1:0)}${pp?' pp':'%'}</small>`;
+    return `<small class="${d>0?'up':'down'}">${d>0?'▲':'▼'} ${gNum(Math.abs(d), pp?1:0)}${pp?' pp':'%'}</small>`;
+  };
+  const ultTxt = (f, fmt) => uK ? `${gMesCorto(uK)}: ${f(M[uK]) === null ? '—' : fmt(f(M[uK]))}${pK ? ` · ${gMesCorto(pK)}: ${f(M[pK]) === null ? '—' : fmt(f(M[pK]))}` : ''}` : '';
+  const kpis = [
+    { lbl:'Service con trabajo adicional', val:fmtPct(IND.servExtra(T)), d:deltaHtml(IND.servExtra, true),
+      sub:`${gNum(T.servExtra)} de ${gNum(T.serv)} services · ${ultTxt(IND.servExtra, fmtPct)}`, c:'--mod-conversion' },
+    { lbl:'Órdenes facturadas con repuestos', val:fmtPct(IND.conRep(T)), d:deltaHtml(IND.conRep, true),
+      sub:`${gNum(T.factRep)} de ${gNum(T.fact)} facturadas · ${ultTxt(IND.conRep, fmtPct)}`, c:'--accent2' },
+    { lbl:'Repuestos por auto', val:IND.repAuto(T) === null ? '—' : gMonedaCorta(IND.repAuto(T)), d:deltaHtml(IND.repAuto, false),
+      sub:`${gNum(T.veh.size)} autos facturados · ${ultTxt(IND.repAuto, gMonedaCorta)}`, c:'--violet' },
+    { lbl:`Presupuestos convertidos (${CONV_DIAS_PRESU} días)`, val:fmtPct(IND.presuConv(T)), d:deltaHtml(IND.presuConv, true),
+      sub:`${gNum(T.presuConv)} de ${gNum(T.presu)} presupuestos`, c:'--accent' },
+  ];
+  document.getElementById('convKpis').innerHTML = kpis.map(k => `
+    <div class="status-card" style="--card-c:var(${k.c});cursor:default;">
+      <div class="status-body">
+        <div class="status-label">${k.lbl}</div>
+        <div class="status-value num">${k.val}${k.d}</div>
+        <div class="status-pct" style="color:var(--text-dim);font-weight:500;">${k.sub}</div>
+      </div>
+    </div>`).join('');
+
+  // ---- tabla mes a mes
+  const filas = [
+    { l:'Órdenes abiertas', f:o => o.ord, fmt:v => gNum(v), t:'Por fecha de apertura' },
+    { l:'Services', f:o => o.serv, fmt:v => gNum(v), t:'Órdenes con una tarea de service / mantenimiento' },
+    { l:'% service con trabajo adicional', f:IND.servExtra, fmt:fmtPct, pp:true, t:'Services que además llevan otra tarea' },
+    { l:'Órdenes facturadas', f:o => o.fact, fmt:v => gNum(v), t:'Por fecha de facturación' },
+    { l:'% con repuestos', f:IND.conRep, fmt:fmtPct, pp:true, t:'Facturadas con material > 0' },
+    { l:'Repuestos por auto', f:IND.repAuto, fmt:gMonedaCorta, t:'Material facturado / autos distintos' },
+    { l:'Mano de obra por auto', f:IND.moAuto, fmt:gMonedaCorta, t:'MO facturada (incl. externa) / autos distintos' },
+    { l:'Ticket por orden', f:IND.ticketOrden, fmt:gMonedaCorta, t:'(Repuestos + MO) / órdenes facturadas' },
+    { l:'Presupuestos emitidos', f:o => o.presu, fmt:v => gNum(v) },
+    { l:'% presupuestos convertidos', f:IND.presuConv, fmt:fmtPct, pp:true, t:`El auto vuelve con orden dentro de ${CONV_DIAS_PRESU} días` },
+  ];
+  const delta = (fila, i) => {
+    if(i === 0 || !completo(meses[i]) || !completo(meses[i-1])) return '';
+    const a = fila.f(M[meses[i]]), b = fila.f(M[meses[i-1]]);
+    if(a === null || b === null) return '';
+    const d = fila.pp ? a - b : (b ? (a/b - 1) * 100 : null);
+    if(d === null) return '';
+    if(Math.abs(d) < (fila.pp ? 0.5 : 1)) return `<small class="flat">= ${gNum(Math.abs(d), fila.pp ? 1 : 0)}${fila.pp ? ' pp' : '%'}</small>`;
+    return `<small class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'} ${gNum(Math.abs(d), fila.pp ? 1 : 0)}${fila.pp ? ' pp' : '%'}</small>`;
+  };
+  const head = meses.map(k => `<th class="num ${completo(k) ? '' : 'parcial'}" title="${k === curMk ? `En curso, al ${gFecha(refISO)}` : (inc.has(k) ? 'Mes incompleto en la base' : '')}">${gMesCorto(k)}${k === curMk ? ` (al ${refISO.slice(8,10)})` : (inc.has(k) ? '*' : '')}</th>`).join('');
+  document.getElementById('convMesTabla').innerHTML = `<thead><tr><th class="sticky-col">Indicador</th>${head}</tr></thead><tbody>` +
+    filas.map(fila => {
+      const vals = meses.map(k => fila.f(M[k]));
+      const comps = meses.map((k,i) => completo(k) ? vals[i] : null);
+      const valid = comps.filter(v => v !== null);
+      const best = valid.length ? Math.max(...valid) : null;
+      return `<tr><td class="sticky-col" title="${fila.t || ''}">${fila.l}${gSpark(comps)}</td>` +
+        meses.map((k,i) => `<td class="mm-v ${completo(k) ? '' : 'parcial'} ${best !== null && comps[i] === best ? 'best' : ''}">${vals[i] === null ? '—' : fila.fmt(vals[i])}${delta(fila, i)}</td>`).join('') + '</tr>';
+    }).join('') + '</tbody>';
+  document.getElementById('convMesCount').textContent = `${meses.length} meses · variación contra el mes anterior`;
+  document.getElementById('convMesNota').textContent = 'Debajo de cada valor, la variación contra el mes anterior (puntos porcentuales en las tasas). Subrayado: el mejor mes. Los meses en curso o incompletos (*) no se comparan.';
+  const ins = document.getElementById('convMesInsight');
+  if(comp.length >= 6){
+    const u3 = comp.slice(-3), p3 = comp.slice(-6, -3);
+    const agg = ks => ks.reduce((o,k) => { const m = M[k]; o.serv += m.serv; o.servExtra += m.servExtra; o.fact += m.fact; o.factRep += m.factRep; o.rep += m.rep; o.mo += m.mo; m.veh.forEach(v => o.veh.add(v)); return o; }, nuevo());
+    const A = agg(u3), B = agg(p3);
+    const dRep = IND.repAuto(B) ? (IND.repAuto(A) / IND.repAuto(B) - 1) * 100 : null;
+    const dUp = IND.servExtra(A) !== null && IND.servExtra(B) !== null ? IND.servExtra(A) - IND.servExtra(B) : null;
+    const col = d => `<b style="color:var(${d >= 0 ? '--ok' : '--danger'})">${d >= 0 ? '+' : '−'}${gNum(Math.abs(d),1)}`;
+    ins.innerHTML = `Últimos 3 meses completos (${u3.map(gMesCorto).join(', ')}) contra los 3 anteriores: repuestos por auto <b>${IND.repAuto(A) === null ? '—' : gMonedaCorta(IND.repAuto(A))}</b>` +
+      (dRep !== null ? ` (${col(dRep)}%</b>)` : '') +
+      `; service con trabajo adicional <b>${fmtPct(IND.servExtra(A))}</b>` + (dUp !== null ? ` (${col(dUp)} pp</b>)` : '') +
+      `; órdenes con repuestos <b>${fmtPct(IND.conRep(A))}</b>.`;
+  } else ins.innerHTML = comp.length ? `Hay ${comp.length} mes(es) completo(s); con 6 o más se compara el último trimestre contra el anterior.` : '';
+
+  // ---- gráficos
+  const lab = meses.map(k => gMesCorto(k) + (completo(k) ? '' : '*'));
+  const linea = (label, data, c, extra={}) => ({ label, data, borderColor:cssVar(c), backgroundColor:cssVar(c), tension:.3, pointRadius:3, borderWidth:2, spanGaps:true, ...extra });
+  const leyenda = { position:'bottom', labels:{ color:cssVar('--text-dim'), font:{ size:11, family:'Inter' }, boxWidth:10, boxHeight:10 } };
+  const ejesMoney = gerEjes(); ejesMoney.y.ticks.callback = v => gMonedaCorta(v);
+  chartConvTicket = gerChart(chartConvTicket, document.getElementById('chartConvTicket'), {
+    type:'line',
+    data:{ labels:lab, datasets:[
+      linea('Repuestos por auto', meses.map(k => IND.repAuto(M[k])), '--mod-conversion'),
+      linea('MO por auto', meses.map(k => IND.moAuto(M[k])), '--accent'),
+      linea('Ticket por orden', meses.map(k => IND.ticketOrden(M[k])), '--violet', { borderDash:[5,4] }),
+    ]},
+    options:{ maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:leyenda, tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${c.raw === null ? '—' : fmtMoney(c.raw)}` } } },
+      scales:ejesMoney }
+  });
+  const ejesPct = gerEjes(); ejesPct.y.max = 100; ejesPct.y.ticks.callback = v => v + '%';
+  chartConvTasas = gerChart(chartConvTasas, document.getElementById('chartConvTasas'), {
+    type:'line',
+    data:{ labels:lab, datasets:[
+      linea('Service con trabajo adicional', meses.map(k => IND.servExtra(M[k])), '--mod-conversion'),
+      linea('Facturadas con repuestos', meses.map(k => IND.conRep(M[k])), '--accent'),
+    ]},
+    options:{ maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:leyenda, tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${c.raw === null ? '—' : gNum(c.raw,1) + '%'}` } } },
+      scales:ejesPct }
+  });
+
+  // ---- por asesor
+  const A = new Map();
+  rows.forEach(r => {
+    const a = A.get(r.asesor) || A.set(r.asesor, nuevo()).get(r.asesor);
+    sumarApertura(a, r);
+    if(convFact(r)) sumarFact(a, r);
+  });
+  const lista = [...A.entries()].sort((x,y) => y[1].ord - x[1].ord);
+  const fila = (nom, o, cls='') => `<tr class="${cls}"><td class="sticky-col">${nom}</td>
+    <td class="num">${gNum(o.ord)}</td><td class="num">${gNum(o.serv)}</td><td class="num">${fmtPct(IND.servExtra(o))}</td>
+    <td class="num sep-l">${gNum(o.fact)}</td><td class="num">${fmtPct(IND.conRep(o))}</td>
+    <td class="num">${IND.repAuto(o) === null ? '—' : gMonedaCorta(IND.repAuto(o))}</td><td class="num">${IND.moAuto(o) === null ? '—' : gMonedaCorta(IND.moAuto(o))}</td>
+    <td class="num">${IND.ticketOrden(o) === null ? '—' : gMonedaCorta(IND.ticketOrden(o))}</td>
+    <td class="num sep-l">${o.presu ? `${gNum(o.presuConv)} / ${gNum(o.presu)}` : '—'}</td></tr>`;
+  document.getElementById('convAsesorTabla').innerHTML = `<thead><tr><th class="sticky-col">Asesor</th>
+    <th class="num">Órdenes</th><th class="num">Services</th><th class="num" title="Services con otra tarea">% c/ adicional</th>
+    <th class="num sep-l">Facturadas</th><th class="num">% c/ repuestos</th><th class="num">Repuestos x auto</th><th class="num">MO x auto</th><th class="num">Ticket x orden</th>
+    <th class="num sep-l" title="Convertidos / emitidos">Presupuestos</th></tr></thead><tbody>` +
+    lista.map(([nom, o]) => fila(titleCase(nom), o)).join('') + `</tbody><tfoot>${fila('Total', T)}</tfoot>`;
+  document.getElementById('convAsesorCount').textContent = `${lista.length} asesores · período filtrado`;
+
+  // ---- presupuestos
+  const hoy = refISO;
+  const pend = presus.filter(p => !p.sig && gAdd(p.r.fApertura, CONV_DIAS_PRESU) >= hoy).length;
+  document.getElementById('convPresuCount').textContent = `${gNum(presus.length)} presupuestos`;
+  document.getElementById('convPresuInsight').innerHTML = presus.length
+    ? `<b>${gNum(T.presuConv)}</b> de <b>${gNum(presus.length)}</b> presupuestos volvieron como trabajo${pend ? `; <b>${gNum(pend)}</b> ${pend === 1 ? 'todavía está' : 'todavía están'} dentro de los ${CONV_DIAS_PRESU} días` : ''}.` +
+      (presus.length < 20 ? ' Hay pocos presupuestos cargados como tarea: para que la tasa sea representativa, los asesores tienen que registrarlos en la orden ("PRESUPUESTAR …").' : '')
+    : 'No hay tareas de presupuesto en el período filtrado.';
+  document.getElementById('convPresuTabla').innerHTML = presus.length ? `<thead><tr><th>Orden</th><th>Apertura</th><th>Patente</th><th>Modelo</th><th>Asesor</th><th>Presupuesto</th><th>Resultado</th></tr></thead><tbody>` +
+    presus.sort((a,b) => a.r.fApertura < b.r.fApertura ? 1 : -1).map(p => {
+      const res = p.sig
+        ? `<span style="color:var(--ok);font-weight:600;">Convertido</span> · OT ${p.sig.orden} (${gFecha(p.sig.fApertura)})`
+        : (gAdd(p.r.fApertura, CONV_DIAS_PRESU) >= hoy ? '<span style="color:var(--warn);font-weight:600;">En plazo</span>' : '<span style="color:var(--danger);font-weight:600;">No volvió</span>');
+      const txt = p.tareas.join(' · ');
+      return `<tr><td>${p.r.orden}</td><td>${gFecha(p.r.fApertura)}</td><td>${p.r.patente || '—'}</td><td>${titleCase(p.r.modelo || '') || '—'}</td><td>${titleCase(p.r.asesor)}</td>
+        <td title="${txt.replace(/"/g,'&quot;')}">${txt.length > 70 ? txt.slice(0,70) + '…' : txt}</td><td>${res}</td></tr>`;
+    }).join('') + '</tbody>' : '';
 }
 
 /* ---------- Gerencia: el negocio mes a mes ---------- */
