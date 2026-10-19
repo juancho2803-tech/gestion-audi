@@ -1203,21 +1203,16 @@ let chartPedidoEstado;
 const ESTADOS = ['Abierta','Cierre de Taller','Cierre de Factura','Facturada','Anulada','Pre-Anulada'];
 
 /* Mapeo Asesor -> Sucursal (AUDI)
-   Completar con los asesores de Audi tal como vienen en la columna Asesor (MAYÚSCULAS, sin tildes).
-   Los que no estén en ninguna lista aparecen como "Sin asignar". */
-const SUC_MAP = {
-  // 'Duarte Quirós': ['APELLIDO NOMBRE'],
-  // 'Sabattini':     [],
-  // 'Accesorios':    [],
-  // 'Preentrega':    [],
-};
+   Los asesores de servicio Audi van a "Audi"; todo el resto (otros asesores) es Chapa y Pintura.
+   Nombres en MAYÚSCULAS, sin tildes, tal como vienen en la columna Asesor. */
+const SUC_AUDI = ['SARAFIAN MELANIA LAURA','TOLEDO EMILIO IVAN','VARGAS SILVIA ALEJANDRA','ZAMMITTO MAURICIO EZEQUIEL'];
 
 function normName(s){ return (s||'').toString().trim().toUpperCase().replace(/\s+/g,' '); }
 
 function getSucursal(asesorRaw, fechaAperturaISO){
   const a = normName(asesorRaw);
-  for(const suc in SUC_MAP){ if(SUC_MAP[suc].includes(a)) return suc; }
-  return 'Sin asignar';
+  if(!a) return 'Sin asignar';
+  return SUC_AUDI.includes(a) ? 'Audi' : 'Chapa y Pintura';
 }
 
 /* Tipologia orden -> Tipologia (1er token) + Subtipologia = texto ORIGINAL completo */
