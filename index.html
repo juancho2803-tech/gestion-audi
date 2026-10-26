@@ -215,6 +215,10 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;}
 .panel-total{font-size:12px;color:var(--text-dim);}
 .chart-wrap{position:relative;height:300px;}
 
+.mix-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px;}
+.mix-stats div{background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;padding:9px 12px;}
+.mix-stats span{display:block;font-size:11px;color:var(--text-dim);}
+.mix-stats b{font-family:'JetBrains Mono',monospace;font-size:14px;}
 .tipo-split{display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:start;}
 @media(max-width:800px){.tipo-split{grid-template-columns:1fr;}}
 .subtipo-col-head{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;}
@@ -889,6 +893,29 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
   </div>
 
   <div class="panel" style="margin-bottom:26px;">
+    <div class="panel-head" style="flex-wrap:wrap;gap:12px;">
+      <h3>Mix repuestos / mano de obra</h3>
+      <div class="pill-selector" id="mixModoSelector">
+        <button type="button" data-m="general" class="active">General</button>
+        <button type="button" data-m="orden">Por orden</button>
+      </div>
+      <span class="panel-total" id="mixTotal"></span>
+    </div>
+    <div id="mixGeneral" class="tipo-split">
+      <div class="chart-wrap" style="height:260px;"><canvas id="chartMix"></canvas></div>
+      <div class="subtipo-col">
+        <div class="subtipo-col-head">Por tipología <span>% repuestos / % mano de obra</span></div>
+        <div class="chart-wrap" style="height:170px;"><canvas id="chartMixTipo"></canvas></div>
+        <div class="mix-stats" id="mixStats"></div>
+      </div>
+    </div>
+    <div id="mixOrden" class="hidden">
+      <div class="chart-wrap" id="mixOrdenWrap" style="height:520px;"><canvas id="chartMixOrden"></canvas></div>
+      <div class="ger-nota" id="mixOrdenNota"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:26px;">
     <div class="panel-head"><h3>Indicadores operativos</h3><span class="panel-total">Click para filtrar la tabla</span></div>
     <div class="insight-cards" id="insightCards"></div>
   </div>
@@ -1248,7 +1275,8 @@ details.det-panel > summary span.dim{font-weight:500;font-size:12px;color:var(--
 /* ============ ESTADO GLOBAL ============ */
 let RAW = [];
 let FILTERED = [];
-let chartTipo, chartSub;
+let chartTipo, chartSub, chartMix, chartMixTipo, chartMixOrden;
+let mixModo = 'general';
 let chartSiniestroSuc, chartSiniestroAsesor;
 let chartPedidoEstado;
 
@@ -3306,7 +3334,84 @@ function renderTable(){
       <td class="num">${fmtHoras(r.tiempoTotalHrs)}</td>
       <td>${fmtDate(r.fConfirm)}</td>
     </tr>`);
+  renderMix(rows);
 }
+
+/* ============ MIX REPUESTOS / MANO DE OBRA (Resumen) ============
+   Mano de obra = MO facturada + MO externa; Repuestos = material facturado + material externo
+   (mismos montos que las columnas de la tabla). Sigue los filtros y el buscador de la tabla. */
+const mixMO = r => (Number(r.moFacturada)||0) + (Number(r.moExterna)||0);
+const mixRep = r => (Number(r.matFacturado)||0) + (Number(r.matExterno)||0);
+function renderMix(rows){
+  const conMonto = rows.filter(r => mixMO(r) + mixRep(r) > 0);
+  const MO = conMonto.reduce((a,r) => a + mixMO(r), 0), REP = conMonto.reduce((a,r) => a + mixRep(r), 0), TOT = MO + REP;
+  const cMO = cssVar('--accent2'), cREP = cssVar('--violet');
+  const pct = (v, t) => t ? (v/t*100).toFixed(1).replace('.', ',') + '%' : '—';
+  document.getElementById('mixTotal').textContent = conMonto.length ? `${conMonto.length.toLocaleString('es-AR')} órdenes con importe · ${fmtMoney(TOT)}` : 'Sin órdenes con importe';
+  document.getElementById('mixGeneral').classList.toggle('hidden', mixModo !== 'general');
+  document.getElementById('mixOrden').classList.toggle('hidden', mixModo !== 'orden');
+  const leyenda = { position:'bottom', labels:{ color:cssVar('--text-dim'), boxWidth:10, boxHeight:10, padding:16, font:{size:12,family:'Inter'} } };
+
+  if(mixModo === 'general'){
+    if(chartMix) chartMix.destroy();
+    chartMix = new Chart(document.getElementById('chartMix'), {
+      type:'doughnut', plugins:[ChartDataLabels],
+      data:{ labels:['Repuestos','Mano de obra'], datasets:[{ data:[REP, MO], backgroundColor:[cREP, cMO], borderWidth:0, borderRadius:5, spacing:2 }] },
+      options:{ cutout:'66%',
+        plugins:{ legend:leyenda,
+          tooltip:{ callbacks:{ label: c => ` ${c.label}: ${fmtMoney(c.raw)} (${pct(c.raw, TOT)})` } },
+          datalabels:{ color:'#fff', font:{size:11.5,weight:'700',family:'Inter'}, formatter: v => v ? pct(v, TOT) : '' } } }
+    });
+    const tipos = ['EXTERNA','GARANTÍA','INTERNA'].filter(t => conMonto.some(r => r.tipologia === t));
+    const agg = tipos.map(t => { const rr = conMonto.filter(r => r.tipologia === t); const m = rr.reduce((a,r)=>a+mixMO(r),0), p = rr.reduce((a,r)=>a+mixRep(r),0); return { m, p, t:m+p }; });
+    if(chartMixTipo) chartMixTipo.destroy();
+    chartMixTipo = new Chart(document.getElementById('chartMixTipo'), {
+      type:'bar', plugins:[ChartDataLabels],
+      data:{ labels:tipos, datasets:[
+        { label:'Repuestos', data:agg.map(a => a.t ? a.p/a.t*100 : 0), backgroundColor:cREP, borderRadius:4, _abs:agg.map(a=>a.p) },
+        { label:'Mano de obra', data:agg.map(a => a.t ? a.m/a.t*100 : 0), backgroundColor:cMO, borderRadius:4, _abs:agg.map(a=>a.m) } ] },
+      options:{ indexAxis:'y', maintainAspectRatio:false,
+        scales:{ x:{ stacked:true, max:100, display:false }, y:{ stacked:true, grid:{display:false}, ticks:{ color:cssVar('--text-dim'), font:{size:11,family:'Inter'} } } },
+        plugins:{ legend:{display:false},
+          tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${fmtMoney(c.dataset._abs[c.dataIndex])} (${c.raw.toFixed(1).replace('.', ',')}%)` } },
+          datalabels:{ color:'#fff', font:{size:11,weight:'700',family:'Inter'}, formatter: v => v >= 8 ? Math.round(v) + '%' : '' } } }
+    });
+    const n = conMonto.length;
+    document.getElementById('mixStats').innerHTML = n ? `
+      <div><span>Repuestos por orden</span><b>${fmtMoney(REP/n)}</b></div>
+      <div><span>Mano de obra por orden</span><b>${fmtMoney(MO/n)}</b></div>
+      <div><span>Ticket por orden</span><b>${fmtMoney(TOT/n)}</b></div>
+      <div><span>$ repuestos por $1 de MO</span><b>${MO ? (REP/MO).toFixed(2).replace('.', ',') : '—'}</b></div>` : '';
+  } else {
+    const TOP = 25;
+    const top = [...conMonto].sort((a,b) => (mixMO(b)+mixRep(b)) - (mixMO(a)+mixRep(a))).slice(0, TOP);
+    document.getElementById('mixOrdenWrap').style.height = Math.max(160, top.length * 22 + 60) + 'px';
+    if(chartMixOrden) chartMixOrden.destroy();
+    chartMixOrden = new Chart(document.getElementById('chartMixOrden'), {
+      type:'bar',
+      data:{ labels:top.map(r => `${r.orden} · ${r.patente || ''}`), datasets:[
+        { label:'Repuestos', data:top.map(mixRep), backgroundColor:cREP, borderRadius:3 },
+        { label:'Mano de obra', data:top.map(mixMO), backgroundColor:cMO, borderRadius:3 } ] },
+      options:{ indexAxis:'y', maintainAspectRatio:false,
+        scales:{ x:{ stacked:true, grid:{color:cssVar('--border')}, ticks:{ color:cssVar('--text-dim'), font:{size:10.5,family:'Inter'}, callback: v => v >= 1e6 ? `$ ${(v/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})} M` : `$ ${(v/1e3).toLocaleString('es-AR',{maximumFractionDigits:0})} mil` } },
+          y:{ stacked:true, grid:{display:false}, ticks:{ color:cssVar('--text-dim'), font:{size:10.5,family:'JetBrains Mono'} } } },
+        plugins:{ legend:leyenda,
+          tooltip:{ callbacks:{
+            title: it => { const r = top[it[0].dataIndex]; return `OT ${r.orden} · ${r.patente || ''} · ${titleCase(r.asesor)}`; },
+            label: c => { const r = top[c.dataIndex], t = mixMO(r) + mixRep(r); return ` ${c.dataset.label}: ${fmtMoney(c.raw)} (${pct(c.raw, t)})`; },
+            footer: it => `Total: ${fmtMoney(mixMO(top[it[0].dataIndex]) + mixRep(top[it[0].dataIndex]))}` } } } }
+    });
+    document.getElementById('mixOrdenNota').textContent = top.length
+      ? `${top.length === 1 ? 'La orden' : `Las ${top.length} órdenes`} de mayor importe según los filtros y el buscador${conMonto.length > TOP ? ` (de ${conMonto.length.toLocaleString('es-AR')} con importe)` : ''}. Buscá un Nº de orden o patente en la tabla para ver solo esa.`
+      : 'No hay órdenes con importe para mostrar.';
+  }
+}
+document.getElementById('mixModoSelector').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  mixModo = b.dataset.m;
+  document.querySelectorAll('#mixModoSelector button').forEach(x => x.classList.toggle('active', x === b));
+  renderTable();
+});
 
 /* ============ PANORAMA EJECUTIVO ============ */
 const MESES_LARGO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
